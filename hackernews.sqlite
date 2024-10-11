@@ -1,0 +1,57 @@
+ -- Understanding the dataset
+-- Top 5 stories with highest scores
+SELECT title, score
+FROM hacker_news
+ORDER BY score DESC
+LIMIT 5;
+
+-- Total score of all stories
+SELECT SUM(score) AS total_score
+FROM hacker_news;
+
+-- Users with combined scores over 200
+SELECT user, SUM(score) AS total_user_score
+FROM hacker_news
+GROUP BY user
+HAVING total_user_score > 200
+ORDER BY total_user_score DESC;
+
+-- Percentage of scores from power users
+WITH power_users AS (
+  SELECT user, SUM(score) AS total_user_score
+  FROM hacker_news
+  GROUP BY user
+  HAVING total_user_score > 200
+)
+SELECT SUM(total_user_score) * 100.0 / (SELECT SUM(score) FROM hacker_news) AS power_users_percentage
+FROM power_users;
+
+-- Rickrolling users
+SELECT user, COUNT(*) AS rickroll_count
+FROM hacker_news
+WHERE url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+GROUP BY user
+ORDER BY rickroll_count DESC;
+
+-- Source sites analysis
+SELECT 
+  CASE
+    WHEN url LIKE '%github.com%' THEN 'GitHub'
+    WHEN url LIKE '%medium.com%' THEN 'Medium'
+    WHEN url LIKE '%nytimes.com%' THEN 'New York Times'
+    ELSE 'Other'
+  END AS 'Source',
+  COUNT(*) AS story_count
+FROM hacker_news
+GROUP BY 1
+ORDER BY story_count DESC;
+
+-- Best time to post analysis
+SELECT 
+  strftime('%H', timestamp) AS hour,
+  ROUND(AVG(score), 1) AS avg_score,
+  COUNT(*) AS story_count
+FROM hacker_news
+WHERE timestamp IS NOT NULL
+GROUP BY hour
+ORDER BY avg_score DESC;
